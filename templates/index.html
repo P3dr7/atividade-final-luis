@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loja Python</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            display: flex;
+            width: 100%;
+        }
+        .items-section {
+            flex: 2;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .item-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .item-card button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .item-card button:hover {
+            background-color: #218838;
+        }
+        .cart-section {
+            flex: 1;
+            padding: 20px;
+            margin-left: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 20px;
+            align-self: flex-start; /* Para o carrinho ficar "fixo" no topo */
+        }
+        .cart-header {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        #cart-items {
+            list-style: none;
+            padding: 0;
+        }
+        #cart-items li {
+            padding: 5px 0;
+            border-bottom: 1px dashed #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+        #cart-items li:last-child {
+            border-bottom: none;
+        }
+        .cart-summary {
+            margin-top: 15px;
+            font-size: 1.1em;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+        .cart-buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .cart-buttons button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        .cart-buttons #checkout-button {
+            background-color: #007bff;
+            color: white;
+        }
+        .cart-buttons #checkout-button:hover {
+            background-color: #0056b3;
+        }
+        .cart-buttons #clear-cart-button {
+            background-color: #dc3545;
+            color: white;
+        }
+        .cart-buttons #clear-cart-button:hover {
+            background-color: #c82333;
+        }
+
+        /* Popup */
+        .popup {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fefefe;
+            padding: 30px;
+            border: 1px solid #888;
+            width: 300px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 1000;
+            border-radius: 8px;
+        }
+        .popup .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .popup .close-button:hover,
+        .popup .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="items-section">
+            <h1>Nossos Produtos</h1>
+            {% for item_id, item_data in items.items() %}
+                <div class="item-card">
+                    <div>
+                        <strong>{{ item_data.name }}</strong> - R$ {{ "%.2f"|format(item_data.price) }}
+                    </div>
+                    <button onclick="addToCart('{{ item_id }}')">Adicionar ao Carrinho</button>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="cart-section">
+            <h2 class="cart-header">Carrinho</h2>
+            <ul id="cart-items">
+                </ul>
+            <div class="cart-summary">
+                <span>Total:</span> <span id="cart-total">R$ 0.00</span>
+            </div>
+            <div class="cart-buttons">
+                <button id="checkout-button" onclick="checkout()">Finalizar Compra</button>
+                <button id="clear-cart-button" onclick="clearCart()">Limpar Carrinho</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="checkout-popup" class="popup">
+        <span class="close-button" onclick="closePopup()">&times;</span>
+        <h2>Compra Finalizada!</h2>
+        <p>Seu pedido foi processado com sucesso.</p>
+        <button onclick="closePopup()">Ok</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', updateCartDisplay);
+
+        async function addToCart(itemId) {
+            const response = await fetch('/add_to_cart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `item_id=${itemId}`
+            });
+            const data = await response.json();
+            if (data.success) {
+                updateCartDisplay();
+            }
+        }
+
+        async function clearCart() {
+            const response = await fetch('/clear_cart', {
+                method: 'POST'
+            });
+            const data = await response.json();
+            if (data.success) {
+                updateCartDisplay();
+            }
+        }
+
+        async function updateCartDisplay() {
+            const response = await fetch('/get_cart');
+            const data = await response.json();
+            const cartItemsList = document.getElementById('cart-items');
+            const cartTotalSpan = document.getElementById('cart-total');
+            let total = 0;
+
+            cartItemsList.innerHTML = ''; // Limpa a lista atual
+
+            if (data.cart && data.cart.length > 0) {
+                data.cart.forEach(item => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${item.name} - R$ ${item.price.toFixed(2)}`;
+                    cartItemsList.appendChild(listItem);
+                    total += item.price;
+                });
+            } else {
+                const listItem = document.createElement('li');
+                listItem.textContent = 'Carrinho vazio';
+                cartItemsList.appendChild(listItem);
+            }
+            cartTotalSpan.textContent = `R$ ${total.toFixed(2)}`;
+        }
+
+        function checkout() {
+            // Aqui você pode adicionar lógica para processar o checkout,
+            // como enviar para um servidor de pagamento real, etc.
+            // Por enquanto, vamos apenas mostrar o popup.
+            document.getElementById('checkout-popup').style.display = 'block';
+            // Após a "finalização", geralmente o carrinho seria limpo
+            clearCart();
+        }
+
+        function closePopup() {
+            document.getElementById('checkout-popup').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
