@@ -1,10 +1,8 @@
 ***Settings***
 Library    SeleniumLibrary    timeout=5s
-# Você pode mudar o navegador para 'firefox', 'edge', etc.
-# Se estiver usando Chrome, o WebDriverManager geralmente cuida do driver.
-# Se tiver problemas, baixe o chromedriver.exe compatível com sua versão do Chrome
-# e coloque-o em um local acessível pelo PATH ou especifique o caminho completo aqui:
-# WebDriver    Chrome    executable_path=/caminho/para/seu/chromedriver.exe
+# Certifique-se de que o teardown está presente em todos os casos de teste,
+# ou adicione um Teardown de Suíte se preferir.
+# Suite Teardown    Close All Browsers # Uma alternativa ao Teardown por Test Case
 
 ***Variables***
 ${URL}           http://127.0.0.1:5000/
@@ -13,7 +11,8 @@ ${BROWSER}       Chrome
 ***Test Cases***
 Cenário: Adicionar Item ao Carrinho e Verificar Total
     [Tags]    FuncionalidadeCarrinho
-    Open Browser    ${URL}    ${BROWSER}
+    # Adicionar as opções para o Chrome aqui
+    Open Browser    ${URL}    ${BROWSER}    options=add_argument("--headless");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");add_argument("--disable-gpu")
     Maximize Browser Window
     Wait Until Page Contains Element    css:body
     # Pequena pausa para garantir que tudo carregou
@@ -44,7 +43,8 @@ Cenário: Adicionar Item ao Carrinho e Verificar Total
 
 Cenário: Limpar Carrinho
     [Tags]    FuncionalidadeCarrinho
-    Open Browser    ${URL}    ${BROWSER}
+    # Adicionar as opções para o Chrome aqui
+    Open Browser    ${URL}    ${BROWSER}    options=add_argument("--headless");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");add_argument("--disable-gpu")
     Maximize Browser Window
     Wait Until Page Contains Element    css:body
     # Pequena pausa para garantir que tudo carregou
@@ -73,7 +73,8 @@ Cenário: Limpar Carrinho
 
 Cenário: Finalizar Compra
     [Tags]    FuncionalidadeCarrinho
-    Open Browser    ${URL}    ${BROWSER}
+    # Adicionar as opções para o Chrome aqui
+    Open Browser    ${URL}    ${BROWSER}    options=add_argument("--headless");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");add_argument("--disable-gpu")
     Maximize Browser Window
     Wait Until Page Contains Element    css:body
     # Pequena pausa para garantir que tudo carregou
